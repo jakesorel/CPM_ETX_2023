@@ -227,4 +227,4 @@ if __name__ == "__main__":
         cpm.save_simulation("../results/param_scan/sims", str(i))
 
 
-    Parallel(n_jobs=-1, backend="loky", prefer="threads")(delayed(do_simulation)(i, j) for i,j in zip(range_to_sample,seed_range))
+    Parallel(n_jobs=10, backend="loky", prefer="threads")(delayed(do_simulation)(i, j) for i,j in zip(range_to_sample,seed_range))
