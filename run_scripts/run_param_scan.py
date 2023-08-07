@@ -19,7 +19,7 @@ import os
 import sys
 sys.dont_write_bytecode = True
 
-SCRIPT_DIR = "../../../../"
+SCRIPT_DIR = "../"
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import time
