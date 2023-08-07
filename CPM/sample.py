@@ -54,7 +54,7 @@ class Sample:
                                                       self.T, self.zmasks.primes, self.zmasks.hashes)
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def do_step(I, num_x, num_y, dP_z, A, P, lambda_A, lambda_P, A0, P0, J_diff, T, primes, hashes):
     """
     Performs one iteration of the Metropolis-Hastings algorithm.
@@ -148,7 +148,7 @@ def do_step(I, num_x, num_y, dP_z, A, P, lambda_A, lambda_P, A0, P0, J_diff, T, 
     return I_new, A, P
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def do_steps(n_steps, I, num_x, num_y, dP_z, A, P, lambda_A, lambda_P, A0, P0, J_diff, T, primes, hashes):
     """
     Iterate **do_step** for n_steps.
@@ -177,7 +177,7 @@ def do_steps(n_steps, I, num_x, num_y, dP_z, A, P, lambda_A, lambda_P, A0, P0, J
     return I, A, P
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def H(A, P, lambda_A, lambda_P, A0, P0):
     """
     Calculate the energy of a given cell.
@@ -192,7 +192,7 @@ def H(A, P, lambda_A, lambda_P, A0, P0):
     return lambda_A * (A - A0) ** 2 + lambda_P * (P - P0) ** 2
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def get_dH(s, dP, dA, A, P, lambda_A, lambda_P, A0, P0):
     """
     Calculate the change in energy.
@@ -213,7 +213,7 @@ def get_dH(s, dP, dA, A, P, lambda_A, lambda_P, A0, P0):
     return dH
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def pick_pixel(I, num_x, num_y):
     """
     Algorithm to choose pixels.
@@ -244,7 +244,7 @@ def pick_pixel(I, num_x, num_y):
     return i, j, s, s2
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def get_mask_id(the_mask, primes, hashes):
     """
     The mask Na==s generically defines the neighbourhood. Only certain masks are allowed in order to preserve
@@ -274,7 +274,7 @@ def get_mask_id(the_mask, primes, hashes):
     return mask_id
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def get_Na(I, i, j):
     """
     Given a point (i,j), subset I to find the Moore neighbourhood. Na is a matrix of size (3,3)
@@ -287,7 +287,7 @@ def get_Na(I, i, j):
     return Na
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def get_s2(I, i, j, num_x, num_y):
     """
     Given a pixel in I, (i,j), randomly sample a cell index, s2, from the Neumann neighbourhood.
@@ -314,7 +314,7 @@ def get_s2(I, i, j, num_x, num_y):
     return s2
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def get_dJ(J_diff, s, s2, Na):
     """
     Calculate the change in the interfacial energy, dJ.
