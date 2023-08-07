@@ -17,6 +17,11 @@ See run_scripts/make_adhesion_matrices.py for details on the bootstraping proced
 """
 import os
 import sys
+sys.dont_write_bytecode = True
+
+SCRIPT_DIR = "../../../../"
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
 import time
 
 import numpy as np
