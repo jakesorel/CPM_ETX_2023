@@ -41,7 +41,7 @@ if __name__ == "__main__":
         params = {"A0": [A0, A0, A0],
                   "P0": [P0, P0, P0],
                   "lambda_A": [lambda_A, lambda_A, lambda_A],
-                  "lambda_P": [lambda_P, lambda_P, lambda_P * lpm],
+                  "lambda_P": [lambda_P, lambda_P, lambda_P],
                   "W": W,
                   "T": 15}
         cpm = CPM(params)
