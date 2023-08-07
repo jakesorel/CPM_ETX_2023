@@ -217,7 +217,7 @@ if __name__ == "__main__":
 
         cpm.get_J_diff()
         cpm.I = np.load("../initialisations/%d.npy"%iteration)
-        cpm.simulate(int(1e7), int(1000), initialize=False, J0=-8)
+        cpm.simulate(int(1e5), int(1000), initialize=False, J0=-8)
         I_save_sparse = [None] * len(cpm.I_save)
         for i, I in enumerate(cpm.I_save):
             I_save_sparse[i] = sparse.csr_matrix(I)
