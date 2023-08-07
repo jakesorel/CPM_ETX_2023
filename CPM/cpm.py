@@ -14,7 +14,7 @@ import numpy as np
 from matplotlib import animation, colors
 from scipy import sparse
 
-from sample import Sample
+from CPM.sample import Sample
 
 
 class CPM:

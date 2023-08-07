@@ -9,7 +9,7 @@ and evolves it under the Cellular-Potts/Metropolis Hastings algorithm to stochas
 import numpy as np
 from numba import jit
 
-from zmasks import Zmasks
+from CPM.zmasks import Zmasks
 
 
 class Sample:

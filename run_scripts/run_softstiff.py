@@ -20,7 +20,7 @@ import sys
 import time
 
 import numpy as np
-
+import json
 from CPM.cpm import CPM
 
 if __name__ == "__main__":
@@ -58,6 +58,7 @@ if __name__ == "__main__":
 
     # Run the first simulation for the lowest lambda_P multiplier.
     lpm = lambda_P_mult_range[0]
+    lpm = lambda_P_mult_range[-1]
 
     params = {"A0": [A0, A0, A0],
               "P0": [P0, P0, P0],
@@ -67,20 +68,38 @@ if __name__ == "__main__":
               "T": 15}
     cpm = CPM(params)
     cpm.make_grid(100, 100)
-    cpm.generate_cells(N_cell_dict={"E": 8, "T": 8, "X": 6})
+    N_cell_dict = {"E": 12, "T": 0, "X": 12}
+    cpm.generate_cells(N_cell_dict=N_cell_dict)
     cpm.make_init("circle", np.sqrt(params["A0"][0] / np.pi) * 0.8, np.sqrt(params["A0"][0] / np.pi) * 0.2)
 
-    #import the bootstrapped adhesion matrix.
-    adhesion_vals_full = np.load("../bootstrap_samples/adhesion_matrices/%i.npz" % iter_i).get("adhesion_vals")
+    # adhesion_dict = json.load(open("raw_data/adhesion_dict.json"))
+    # ES_ES = np.array(adhesion_dict["ES-ES"]).mean()
+    # ES_XEN = np.array(adhesion_dict["XEN-ES"]).mean()
+    # XEN_XEN = np.array(adhesion_dict["XEN-XEN"]).mean()
+    ES_ES = 1.9436504565
+    ES_XEN = 0.8329231603358208
+    XEN_XEN = 0.5572779603960396
+
+
+    adhesion_vals_full = np.zeros((cpm.n_cells+1,cpm.n_cells+1))
     adhesion_vals_full[0] = b_e * cpm.lambda_P
     adhesion_vals_full[:, 0] = b_e * cpm.lambda_P
     adhesion_vals_full[0, 0] = 0
+    adhesion_vals_full[1:1+N_cell_dict["E"],1:1+N_cell_dict["E"]] = ES_ES
+    adhesion_vals_full[-N_cell_dict["X"]:,-N_cell_dict["X"]:] = XEN_XEN
+    adhesion_vals_full[1:1+N_cell_dict["E"],-N_cell_dict["X"]:] = ES_XEN
+    adhesion_vals_full[-N_cell_dict["X"]:,1:1+N_cell_dict["E"]] = ES_XEN
+
     cpm.J = -adhesion_vals_full * 6
 
     cpm.get_J_diff()
     t0 = time.time()
-    cpm.simulate(int(1e7), int(1000), initialize=True, J0=-8)
-
+    cpm.simulate(int(1e7), int(100), initialize=True, J0=-8)
+    cpm.c_types_all = np.concatenate(((0,), cpm.c_types))
+    plt.imshow(cpm.c_types_all[cpm.I_save[-1]])
+    plt.show()
+    cpm.generate_image_t()
+    cpm.animate("animation")
     cpm.save_simulation("../results/variable_soft/%.2f" % lpm, str(iter_i))
 
     #Run with the rest of the lambda_P multipliers. Uses the same initialisation, such that the simulations are fully
