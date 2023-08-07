@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     # Establish the directory structure for saving.
     if not os.path.exists("../results"):
-        os.mkdir("results")
+        os.mkdir("../results")
 
     if not os.path.exists("../results/param_scan"):
         os.mkdir("../results/param_scan")
