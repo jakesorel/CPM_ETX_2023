@@ -165,7 +165,7 @@ if __name__ == "__main__":
     N_blocks = int(total_N/N_repeat)
     range_to_sample = np.arange(N_repeat*iter_i,N_repeat*(iter_i+1))
 
-    def do_simulation(i,iteration):
+    def do_simulation(ii,iteration):
 
         # Define the parameters.
         A0 = 30
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         params = {"A0": [A0, A0, A0],
                   "P0": [P0, P0, P0],
                   "lambda_A": [lambda_A, lambda_A, lambda_A],
-                  "lambda_P": [lambda_P, lambda_P, lambda_P * lP_f[i]],
+                  "lambda_P": [lambda_P, lambda_P, lambda_P * lP_f[ii]],
                   "W": W,
                   "T": 15}
         cpm = CPM(params)
@@ -200,8 +200,8 @@ if __name__ == "__main__":
         # ES_XEN = np.array(adhesion_dict["XEN-ES"]).mean()
         # XEN_XEN = np.array(adhesion_dict["XEN-XEN"]).mean()
         ES_ES = 1.9436504565
-        ES_XEN = EX_f[i]#0.8329231603358208
-        XEN_XEN = XX_f[i]#0.5572779603960396
+        ES_XEN = EX_f[ii]#0.8329231603358208
+        XEN_XEN = XX_f[ii]#0.5572779603960396
 
 
         adhesion_vals_full = np.zeros((cpm.n_cells+1,cpm.n_cells+1))
@@ -228,8 +228,8 @@ if __name__ == "__main__":
             enveloping_scores[1][i] = enveloping_score2(I_sparse,c_types_i)
 
         df = pd.DataFrame({"env1_E":enveloping_scores[0][:,0],"env1_X":enveloping_scores[0][:,1],"env2_E":enveloping_scores[1][:,0],"env2_X":enveloping_scores[1][:,1]})
-        df.to_csv("../results/param_scan/analysis/%d.csv"%i)
-        cpm.save_simulation("../results/param_scan/sims", str(i))
+        df.to_csv("../results/param_scan/analysis/%d.csv"%ii)
+        cpm.save_simulation("../results/param_scan/sims", str(ii))
 
 
     Parallel(n_jobs=10, backend="loky", prefer="threads")(delayed(do_simulation)(i, j) for i,j in zip(range_to_sample,seed_range))
