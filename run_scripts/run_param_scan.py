@@ -161,7 +161,7 @@ if __name__ == "__main__":
     lP_f,EX_f, XX_f, S_f = lP.ravel(),EX.ravel(),XX.ravel(),S.ravel()
 
     total_N = lP_f.size
-    N_repeat = seed_range
+    N_repeat = seed_range.size
     N_blocks = int(total_N/N_repeat)
     range_to_sample = np.arange(N_repeat*iter_i,N_repeat*(iter_i+1))
 
