@@ -155,14 +155,18 @@ if __name__ == "__main__":
     if not os.path.exists("../results/param_scan/analysis"):
         os.mkdir("../results/param_scan/analysis")
 
+    if not os.path.exists("../results/param_scan/analysis_summary"):
+        os.mkdir("../results/param_scan/analysis_summary")
+
+
     # Get the index of the boostrap adhesion matrix to be used to parameterise the CPM. From the command-line.
     iter_i = int(sys.argv[1])
 
     # Define the range of lambda_P multiples to be spanned across in the parameter scan.
-    lambda_P_mult_range = np.flip(np.linspace(0.2, 1, 10))
+    lambda_P_mult_range = np.linspace(0.1, 1, 10)
     ES_XEN_range = np.linspace(0.38398139838304457,1.9436504565,10)
     XEN_XEN_range = np.linspace(0.38398139838304457,1.9436504565,10)
-    seed_range = np.arange(10)
+    seed_range = np.arange(50)
 
     lP,EX,XX,S = np.meshgrid(lambda_P_mult_range,ES_XEN_range,XEN_XEN_range,seed_range,indexing="ij")
     lP_f,EX_f, XX_f, S_f = lP.ravel(),EX.ravel(),XX.ravel(),S.ravel()
@@ -238,7 +242,7 @@ if __name__ == "__main__":
         I_sparse, c_types_i = remove_non_attached(I_sparse, cpm.c_types)
         env = enveloping_score2(I_sparse, c_types_i)
         print(env[1]/env[0])
-        cpm.simulate(int(5e5), int(1000), initialize=False, J0=cpm.J[1:,1:].mean())
+        cpm.simulate(int(1e6), int(1000), initialize=False, J0=cpm.J[1:,1:].mean())
         # cpm.generate_image_t()
         fig, ax = plt.subplots(1,2)
         res = 8
@@ -268,16 +272,31 @@ if __name__ == "__main__":
             enveloping_scores[0][i] = enveloping_score(I_sparse, c_types_i)
             enveloping_scores[1][i] = enveloping_score2(I_sparse,c_types_i)
             enveloping_scores[2][i] = enveloping_score3(I_sparse.toarray(), cpm)
+
+        enveloping_scores_final_means = np.zeros(6)
+        enveloping_scores_final_means[0] = enveloping_scores[0][-100:,0].mean()
+        enveloping_scores_final_means[1] = enveloping_scores[0][-100:,1].mean()
+        enveloping_scores_final_means[2] = enveloping_scores[1][-100:,0].mean()
+        enveloping_scores_final_means[3] = enveloping_scores[1][-100:,1].mean()
+        enveloping_scores_final_means[4] = ((enveloping_scores[1][-100:,1] - enveloping_scores[1][-100:,0])/(enveloping_scores[1][-100:,1] + enveloping_scores[1][-100:,0])).mean()
+        enveloping_scores_final_means[5] = enveloping_scores[2][-100:].mean()
+        fl = open("../results/analysis_summary/%d.csv"%ii)
+        fl.write(str(ii) + "," + ",".join(enveloping_scores_final_means.astype(str)))
+        fl.close()
+
         #
         # fig, ax = plt.subplots()
         # ax.plot(2*enveloping_scores[1][:,1]/(enveloping_scores[1][:,1] + enveloping_scores[1][:,0]))
         # # ax.plot(enveloping_scores[1][:,1])
         # fig.show()
         # env_score = (enveloping_scores[1][:,1]-enveloping_scores[1][:,0])/(enveloping_scores[1][:,1] + enveloping_scores[1][:,0])
+        # plt.plot(np.cumsum(env_score) / np.arange(len(env_score)))
+        # plt.plot(env_score)
+        # plt.show()
         #
-        # def exponential(t,end,tau):
-        #     return end + (env_score[0]-end)*np.exp(-t/tau)
-        #
+        # def exponential(t,start,end,tau):
+        #     return end + (start-end)*np.exp(-t/tau)
+
         # env_params = curve_fit(exponential,np.arange(len(env_score)),env_score)
         # plt.plot(env_score)
         # plt.plot(exponential(np.arange(len(env_score)),*env_params[0]))
