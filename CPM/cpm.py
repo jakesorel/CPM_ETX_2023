@@ -227,6 +227,9 @@ class CPM:
         lambda_P = self.lambda_P.copy()
         self.lambda_P[:] = np.max(self.lambda_P)
         self.J = np.zeros_like(self.J)
+        self.J[0] = np.min(J[0])
+        self.J[:,0] = np.min(J[:,0])
+        self.J[0,0] = 0
         self.J[1:, 1:] = J0
         self.J = self.J * (1 - np.eye(self.J.shape[0]))
         self.get_J_diff()

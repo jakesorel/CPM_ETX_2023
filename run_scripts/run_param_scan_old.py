@@ -32,7 +32,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.ndimage.measurements import center_of_mass
 from joblib import delayed, Parallel
-from scipy.optimize import curve_fit
+
 
 def get_adj(I_sparse):
     """
@@ -131,13 +131,6 @@ def enveloping_score2(I_sparse, c_types_i):
 
     return is_enveloping
 
-def enveloping_score3(I,cpm):
-    C = np.array(np.concatenate(((0,), cpm.c_types)))[I]
-    perim = cpm.get_perimeter_elements(I == 0)
-    perimE = (perim*(C==1)).sum()
-    perimX = (perim*(C==3)).sum()
-    return perimX/(perimE+perimX)
-
 
 
 if __name__ == "__main__":
@@ -177,15 +170,16 @@ if __name__ == "__main__":
         # Define the parameters.
         A0 = 30
         P0 = 0
-        lambda_A = 8
+        lambda_A = 1
         lambda_P = 0.2
+        b_e = -0.5
 
         # Define the W-matrix. Needed, given the architecture, but actually not used in practice, as is replaced by the
         # bootstrapped adhesion matrices.
-        W = np.array([[0, 0, 0, 0],
-                      [0, 1.911305, 0.494644, 0.505116],
-                      [0, 0.494644, 2.161360, 0.420959],
-                      [np.nan, 0.505116, 0.420959, 0.529589]]) * 6.02
+        W = np.array([[b_e, b_e, b_e, b_e],
+                      [b_e, 1.911305, 0.494644, 0.505116],
+                      [b_e, 0.494644, 2.161360, 0.420959],
+                      [b_e, 0.505116, 0.420959, 0.529589]]) * 6.02
 
 
 
@@ -193,12 +187,11 @@ if __name__ == "__main__":
                   "P0": [P0, P0, P0],
                   "lambda_A": [lambda_A, lambda_A, lambda_A],
                   "lambda_P": [lambda_P, lambda_P, lambda_P * lP_f[ii]],
-                  # "lambda_P": [lambda_P, lambda_P, lambda_P * 0.7],
                   "W": W,
                   "T": 15}
         cpm = CPM(params)
         cpm.make_grid(100, 100)
-        N_cell_dict = {"E": 8, "T": 0, "X": 8}
+        N_cell_dict = {"E": 12, "T": 0, "X": 12}
         cpm.generate_cells(N_cell_dict=N_cell_dict)
         cpm.make_init("circle", np.sqrt(params["A0"][0] / np.pi) * 0.8, np.sqrt(params["A0"][0] / np.pi) * 0.2)
 
@@ -206,87 +199,41 @@ if __name__ == "__main__":
         # ES_ES = np.array(adhesion_dict["ES-ES"]).mean()
         # ES_XEN = np.array(adhesion_dict["XEN-ES"]).mean()
         # XEN_XEN = np.array(adhesion_dict["XEN-XEN"]).mean()
-
-        # ES_ES = XEN_XEN
-        # ES_XEN = XEN_XEN
         ES_ES = 1.9436504565
         ES_XEN = EX_f[ii]#0.8329231603358208
         XEN_XEN = XX_f[ii]#0.5572779603960396
 
-
+        """
+        E = kA (A-A0)^2 + kP P^2 - sum_interface l_interface J_interface
+        
+        """
 
         adhesion_vals_full = np.zeros((cpm.n_cells+1,cpm.n_cells+1))
+        adhesion_vals_full[0] = b_e * cpm.lambda_P
+        adhesion_vals_full[:, 0] = b_e * cpm.lambda_P
+        adhesion_vals_full[0, 0] = 0
         adhesion_vals_full[1:1+N_cell_dict["E"],1:1+N_cell_dict["E"]] = ES_ES
         adhesion_vals_full[-N_cell_dict["X"]:,-N_cell_dict["X"]:] = XEN_XEN
         adhesion_vals_full[1:1+N_cell_dict["E"],-N_cell_dict["X"]:] = ES_XEN
         adhesion_vals_full[-N_cell_dict["X"]:,1:1+N_cell_dict["E"]] = ES_XEN
-        adhesion_vals_full[:,0] = -cpm.lambda_P * 5
-        adhesion_vals_full[0] = -cpm.lambda_P * 5
-        adhesion_vals_full[0,0] = 0.
 
-        # adhesion_vals_full *= 6
-        # adhesion_vals_full[1:,1:] += b_e
-        #cpm.J = -adhesion_vals_full * 6
-
-        cpm.J = -adhesion_vals_full * 36
+        cpm.J = -adhesion_vals_full * 6
 
         cpm.get_J_diff()
-        # cpm.I = np.load("../initialisations/%d.npy"%iteration)
-        # cpm.I = np.load("initialisations/%d.npy"%iteration)
-        cpm.initialize(J0=cpm.J[1:,1:].mean(),n_initialise_steps=10000)
-        I_sparse = sparse.csr_matrix(cpm.I)
-        I_sparse, c_types_i = remove_non_attached(I_sparse, cpm.c_types)
-        env = enveloping_score2(I_sparse, c_types_i)
-        print(env[1]/env[0])
-        cpm.simulate(int(5e5), int(1000), initialize=False, J0=cpm.J[1:,1:].mean())
-        # cpm.generate_image_t()
-        fig, ax = plt.subplots(1,2)
-        res = 8
-        col_dict = {1: "red", 2: "blue",3:"green"}
-        background = np.array([0, 0, 0, 0.6])
-        ax[0].imshow(cpm.generate_image(cpm.I_save[0], res, col_dict, background))
-        # ax[0].imshow(np.array(np.concatenate(((0,), cpm.c_types)))[cpm.I_save[0]])
-        ax[1].imshow(cpm.generate_image(cpm.I_save[-1], res, col_dict, background))
-        fig.show()
-        # cpm.animate("test","plots")
-
-
-        enveloping_scores = np.zeros((len(cpm.I_save)))
-        for i, I in enumerate(cpm.I_save):
-            enveloping_scores[i] = enveloping_score3(I,cpm)
-
-        fig, ax = plt.subplots()
-        ax.plot(enveloping_scores)
-        fig.show()
-
+        cpm.I = np.load("../initialisations/%d.npy"%iteration)
+        cpm.simulate(int(1e7), int(1000), initialize=False, J0=-8)
         I_save_sparse = [None] * len(cpm.I_save)
         for i, I in enumerate(cpm.I_save):
             I_save_sparse[i] = sparse.csr_matrix(I)
-        enveloping_scores = [np.zeros((len(I_save_sparse), 2)), np.zeros((len(I_save_sparse), 2)),np.zeros((len(I_save_sparse)))]
+        enveloping_scores = [np.zeros((len(I_save_sparse),2)),np.zeros((len(I_save_sparse),2))]
         for i, I_sparse in enumerate(I_save_sparse):
-            I_sparse, c_types_i = remove_non_attached(I_sparse, cpm.c_types)
-            enveloping_scores[0][i] = enveloping_score(I_sparse, c_types_i)
+            I_sparse,c_types_i =  remove_non_attached(I_sparse, cpm.c_types)
+            enveloping_scores[0][i] = enveloping_score(I_sparse,c_types_i)
             enveloping_scores[1][i] = enveloping_score2(I_sparse,c_types_i)
-            enveloping_scores[2][i] = enveloping_score3(I_sparse.toarray(), cpm)
-        #
-        # fig, ax = plt.subplots()
-        # ax.plot(2*enveloping_scores[1][:,1]/(enveloping_scores[1][:,1] + enveloping_scores[1][:,0]))
-        # # ax.plot(enveloping_scores[1][:,1])
-        # fig.show()
-        # env_score = (enveloping_scores[1][:,1]-enveloping_scores[1][:,0])/(enveloping_scores[1][:,1] + enveloping_scores[1][:,0])
-        #
-        # def exponential(t,end,tau):
-        #     return end + (env_score[0]-end)*np.exp(-t/tau)
-        #
-        # env_params = curve_fit(exponential,np.arange(len(env_score)),env_score)
-        # plt.plot(env_score)
-        # plt.plot(exponential(np.arange(len(env_score)),*env_params[0]))
-        # plt.show()
 
-        df = pd.DataFrame({"env1_E":enveloping_scores[0][:,0],"env1_X":enveloping_scores[0][:,1],"env2_E":enveloping_scores[1][:,0],"env2_X":enveloping_scores[1][:,1],"env3":enveloping_scores[2]})
+        df = pd.DataFrame({"env1_E":enveloping_scores[0][:,0],"env1_X":enveloping_scores[0][:,1],"env2_E":enveloping_scores[1][:,0],"env2_X":enveloping_scores[1][:,1]})
         df.to_csv("../results/param_scan/analysis/%d.csv"%ii)
         cpm.save_simulation("../results/param_scan/sims", str(ii))
 
 
     Parallel(n_jobs=10, backend="loky", prefer="threads")(delayed(do_simulation)(i, j) for i,j in zip(range_to_sample,seed_range))
-
