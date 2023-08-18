@@ -280,7 +280,7 @@ if __name__ == "__main__":
         enveloping_scores_final_means[3] = enveloping_scores[1][-100:,1].mean()
         enveloping_scores_final_means[4] = ((enveloping_scores[1][-100:,1] - enveloping_scores[1][-100:,0])/(enveloping_scores[1][-100:,1] + enveloping_scores[1][-100:,0])).mean()
         enveloping_scores_final_means[5] = enveloping_scores[2][-100:].mean()
-        fl = open("../results/param_scan/analysis_summary/%d.csv"%ii)
+        fl = open("../results/param_scan/analysis_summary/%d.csv"%ii,"w")
         fl.write(str(ii) + "," + ",".join(enveloping_scores_final_means.astype(str)))
         fl.close()
 
